@@ -1,30 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@fixtures/index';
 
 test.describe('Home page', { tag: '@smoke' }, () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+  test.beforeEach(async ({ homePage }) => {
+    await homePage.goto();
   });
 
-  test('loads with navigation and a product grid', async ({ page }) => {
+  test('loads with navigation and a product grid', async ({ page, homePage }) => {
     await expect(page).toHaveTitle(/Practice Software Testing - Toolshop/);
-    await expect(page.getByTestId('nav-sign-in')).toBeVisible();
-
-    const productNames = page.getByTestId('product-name');
-    await expect(productNames.first()).toBeVisible();
-    expect(await productNames.count()).toBeGreaterThan(0);
+    await expect(homePage.header.signInLink).toBeVisible();
+    await expect(homePage.products.names.first()).toBeVisible();
   });
 
-  test('search returns only matching products', async ({ page }) => {
+  // Search also matches descriptions (e.g. "pliers" finds Bolt Cutters), so the
+  // API search endpoint is the oracle rather than a naive "name contains term" check.
+  test('search shows the same products the search API returns', async ({
+    homePage,
+    productsApi,
+  }) => {
     const term = 'pliers';
+    const expected = (await productsApi.search(term)).data.map((p) => p.name);
 
-    await page.getByTestId('search-query').fill(term);
-    await page.getByTestId('search-submit').click();
+    await homePage.search(term);
 
-    await expect(page.getByTestId('search-caption')).toContainText(term);
-    const names = page.getByTestId('product-name');
-    await expect(names.first()).toBeVisible();
-    for (const name of await names.allTextContents()) {
-      expect(name.toLowerCase()).toContain(term);
-    }
+    await expect(homePage.searchCaption).toContainText(term);
+    await expect(homePage.products.names).toHaveText(expected);
   });
 });

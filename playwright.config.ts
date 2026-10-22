@@ -1,6 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 import { env } from './src/config/env';
 
+const browserProjects = [
+  ['chromium', 'Desktop Chrome'],
+  ['firefox', 'Desktop Firefox'],
+  ['webkit', 'Desktop Safari'],
+  ['mobile-chrome', 'Pixel 7'],
+] as const;
+
 /**
  * Locally: 2 workers to stay within a low-RAM laptop's limits.
  * CI: retries on, forbid .only, and machine-readable reporters.
@@ -34,25 +41,17 @@ export default defineConfig({
       testDir: './tests/api',
       use: { baseURL: env.apiUrl },
     },
+    // Registers a user and saves its session once; browser projects depend on it.
     {
-      name: 'chromium',
-      testIgnore: /api\//,
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
+    ...browserProjects.map(([name, device]) => ({
+      name,
       testIgnore: /api\//,
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      testIgnore: /api\//,
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'mobile-chrome',
-      testIgnore: /api\//,
-      use: { ...devices['Pixel 7'] },
-    },
+      dependencies: ['setup'],
+      use: { ...devices[device] },
+    })),
   ],
 });
