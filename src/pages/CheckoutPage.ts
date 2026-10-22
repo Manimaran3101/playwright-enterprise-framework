@@ -18,6 +18,8 @@ export class CheckoutPage extends CartPage {
   readonly proceedFromAddressButton: Locator;
   readonly paymentMethodSelect: Locator;
   readonly finishButton: Locator;
+  readonly checkPaymentButton: Locator;
+  readonly confirmButton: Locator;
   readonly paymentSuccessMessage: Locator;
   readonly orderConfirmation: Locator;
   readonly invoiceNumber: Locator;
@@ -36,6 +38,10 @@ export class CheckoutPage extends CartPage {
     this.proceedFromAddressButton = page.getByTestId('proceed-3');
     this.paymentMethodSelect = page.getByTestId('payment-method');
     this.finishButton = page.getByTestId('finish');
+    // One element changes role: "Check payment" → (payment accepted) → "Confirm".
+    // Targeting each state by text makes clicks wait for the right state.
+    this.checkPaymentButton = this.finishButton.filter({ hasText: 'Check payment' });
+    this.confirmButton = this.finishButton.filter({ hasText: 'Confirm' });
     this.paymentSuccessMessage = page.getByTestId('payment-success-message');
     // The confirmation has no data-test hook; the id is the most stable option.
     this.orderConfirmation = page.locator('#order-confirmation');
@@ -63,11 +69,11 @@ export class CheckoutPage extends CartPage {
     method: Extract<PaymentMethod, 'cash-on-delivery'> = 'cash-on-delivery',
   ): Promise<void> {
     await this.paymentMethodSelect.selectOption(method);
-    await this.finishButton.click();
+    await this.checkPaymentButton.click();
   }
 
   @step('Checkout: confirm order')
   async confirmOrder(): Promise<void> {
-    await this.finishButton.click();
+    await this.confirmButton.click();
   }
 }

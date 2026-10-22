@@ -115,6 +115,7 @@ flowchart LR
 ```
 
 - **Hermetic test environment** — [`start-toolshop`](.github/actions/start-toolshop/action.yml) runs the app (Laravel API, Angular UI, MariaDB) inside every job, pinned to a commit and freshly seeded. The public demo sits behind a Cloudflare bot check that challenges CI runners; testing a private instance avoids it _without_ trying to bypass it, and removes cold starts and shared data.
+- **Pinned browser environment** — UI tests run inside the official `mcr.microsoft.com/playwright` image matching the installed Playwright version, so no job depends on apt mirrors; flaky infrastructure steps (Docker Hub pulls) retry with backoff.
 - **Fast PRs, thorough nights** — pull requests and pushes run Chromium in 2 shards; the nightly run covers Chromium, Firefox, WebKit and mobile.
 - **One report** — shard blob reports are merged into a single HTML report with traces, published even when tests fail.
 - **Linux visual baselines** — [`update-snapshots.yml`](.github/workflows/update-snapshots.yml) regenerates them on the same runner and app version CI uses.
