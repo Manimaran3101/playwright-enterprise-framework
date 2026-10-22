@@ -57,7 +57,7 @@ jobs:
         run: npx playwright test --project=api
         env:
           BLOB_REPORT_NAME: api
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: blob-report-api
@@ -105,7 +105,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
         env:
           BLOB_REPORT_NAME: ${{ matrix.project }}-${{ matrix.shard }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: blob-report-${{ matrix.project }}-${{ matrix.shard }}
@@ -133,7 +133,7 @@ jobs:
           merge-multiple: true
       - name: Merge shard reports into one HTML report
         run: npx playwright merge-reports --reporter html ./all-blob-reports
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: html-report
           path: playwright-report
