@@ -39,6 +39,7 @@ export const env = {
   baseUrl: process.env.BASE_URL ?? presets[envName].baseUrl,
   apiUrl: process.env.API_URL ?? presets[envName].apiUrl,
   isCI: !!process.env.CI,
+  apiTimeout: Number(process.env.API_TIMEOUT_MS ?? 30_000),
   customer: {
     email: process.env.CUSTOMER_EMAIL ?? 'customer@practicesoftwaretesting.com',
     password: process.env.CUSTOMER_PASSWORD ?? 'welcome01',

@@ -1,4 +1,28 @@
-/** Shapes of the Toolshop API payloads we use. Field names mirror the API (snake_case). */
+import type { z } from 'zod';
+import type {
+  InvoiceLineSchema,
+  InvoiceSchema,
+  ProductSchema,
+  TokenSchema,
+  UserSchema,
+} from './schemas';
+
+/** Response types are inferred from the Zod contracts, so they can never drift apart. */
+export type Product = z.infer<typeof ProductSchema>;
+export type TokenResponse = z.infer<typeof TokenSchema>;
+export type UserResponse = z.infer<typeof UserSchema>;
+export type Invoice = z.infer<typeof InvoiceSchema>;
+export type InvoiceLine = z.infer<typeof InvoiceLineSchema>;
+
+export interface Paginated<T> {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  data: T[];
+}
+
+/** Request payloads (what we send), written by hand. Field names mirror the API. */
 
 export interface Address {
   street: string;
@@ -17,35 +41,6 @@ export interface UserData {
   email: string;
   password: string;
   address: Address;
-}
-
-export interface UserResponse extends Omit<UserData, 'password'> {
-  id: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  is_rental: boolean;
-  in_stock: boolean;
-  category?: { id: string; name: string };
-  brand?: { id: string; name: string };
-}
-
-export interface Paginated<T> {
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-  data: T[];
 }
 
 export interface CartItem {
