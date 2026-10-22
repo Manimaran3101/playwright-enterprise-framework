@@ -24,6 +24,9 @@ concurrency:
 env:
   NODE_VERSION: 22
   CI: true
+  # Tests run against a private Toolshop instance started inside each job
+  # (see .github/actions/start-toolshop), not the Cloudflare-protected public demo.
+  TEST_ENV: local
 
 jobs:
   quality:
@@ -45,9 +48,12 @@ jobs:
     name: API tests
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/start-toolshop
+        with:
+          with-ui: 'false'
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -68,7 +74,7 @@ jobs:
     name: UI ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +106,7 @@ jobs:
             *)       engines="chromium" ;;
           esac
           npx playwright install --with-deps $engines
+      - uses: ./.github/actions/start-toolshop
 
       - name: Run tests
         run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
