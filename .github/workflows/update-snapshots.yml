@@ -22,8 +22,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Same private app instance CI tests against, so baselines match what CI sees.
+      - uses: ./.github/actions/start-toolshop
       - name: Regenerate visual baselines
         run: npx playwright test --project=chromium --grep @visual --update-snapshots
+        env:
+          TEST_ENV: local
       - name: Commit changed baselines
         run: |
           git config user.name "github-actions[bot]"
