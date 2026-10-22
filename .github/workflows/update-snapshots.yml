@@ -32,7 +32,7 @@ jobs:
       - name: Regenerate visual baselines
         run: |
           docker run --rm --init --network host --ipc host \
-            -v "$PWD":/work -w /work -e CI=true -e TEST_ENV=local \
+            -v "$PWD":"$PWD" -w "$PWD" -e CI=true -e TEST_ENV=local \
             "${{ steps.pw.outputs.image }}" \
             npx playwright test --project=chromium --grep @visual --update-snapshots
       - name: Commit changed baselines

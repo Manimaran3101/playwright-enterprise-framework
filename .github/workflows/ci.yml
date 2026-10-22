@@ -108,9 +108,11 @@ jobs:
       - name: Run tests
         # --network host: reach the Toolshop containers on localhost:4200 / :8091.
         # --ipc host: recommended for Chromium in Docker. --init: reaps browser processes.
+        # Same path inside and outside the container, so all shard reports share one
+        # testDir and can be merged with the API job's report.
         run: |
           docker run --rm --init --network host --ipc host \
-            -v "$PWD":/work -w /work \
+            -v "$PWD":"$PWD" -w "$PWD" \
             -e CI -e TEST_ENV -e BLOB_REPORT_NAME \
             "${{ steps.pw.outputs.image }}" \
             npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
