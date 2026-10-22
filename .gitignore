@@ -22,3 +22,4 @@ allure-report/
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
+all-blob-reports/
