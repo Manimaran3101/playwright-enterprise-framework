@@ -7,6 +7,7 @@ test.describe('Home page', { tag: '@smoke' }, () => {
 
   test('loads with navigation and a product grid', async ({ page, homePage }) => {
     await expect(page).toHaveTitle(/Practice Software Testing - Toolshop/);
+    await homePage.header.expand();
     await expect(homePage.header.signInLink).toBeVisible();
     await expect(homePage.products.names.first()).toBeVisible();
   });

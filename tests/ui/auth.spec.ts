@@ -41,6 +41,9 @@ test.describe('Authentication', { tag: '@regression' }, () => {
 
     await accountPage.header.signOut();
 
+    // Sign-out reloads the page; wait for the logged-out header before opening it.
+    await expect(accountPage.header.signInLink).toBeAttached();
+    await accountPage.header.expand();
     await expect(accountPage.header.signInLink).toBeVisible();
   });
 
@@ -51,6 +54,9 @@ test.describe('Authentication', { tag: '@regression' }, () => {
       await accountPage.goto();
 
       await expect(accountPage.title).toHaveText('My account');
+      // Open the nav first so "Sign in is hidden" means logged in, not "menu collapsed".
+      await accountPage.header.expand();
+      await expect(accountPage.header.userMenu).toBeVisible();
       await expect(accountPage.header.userMenu).toContainText(savedUser.first_name);
       await expect(accountPage.header.signInLink).toBeHidden();
     });
