@@ -99,18 +99,29 @@ jobs:
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.project }}
       - name: Install browsers
         # The auth setup project always needs Chromium; add the project's own engine.
-        # apt mirrors occasionally stall on hosted runners, so each attempt is capped
-        # and retried instead of letting one hang consume the whole job timeout.
-        timeout-minutes: 16
+        timeout-minutes: 20
         run: |
           case "${{ matrix.project }}" in
             firefox) engines="chromium firefox" ;;
             webkit)  engines="chromium webkit" ;;
             *)       engines="chromium" ;;
           esac
+
+          # Browser binaries come from Playwright's CDN (and the cache) — no apt involved.
+          npx playwright install $engines
+
+          # System libraries come from apt, whose mirrors occasionally stall on hosted
+          # runners. Let apt time out and retry by itself, wait for (not fail on) the
+          # dpkg lock, and clean up any half-finished attempt before retrying.
+          printf '%s\n' 'Acquire::Retries "5";' 'Acquire::http::Timeout "30";' \
+            'Acquire::https::Timeout "30";' 'DPkg::Lock::Timeout "300";' \
+            | sudo tee /etc/apt/apt.conf.d/99-ci-resilience > /dev/null
           for attempt in 1 2 3; do
-            timeout 5m npx playwright install --with-deps $engines && exit 0
-            echo "::warning::Browser install attempt $attempt failed or timed out; retrying"
+            timeout --kill-after=30s 6m npx playwright install-deps $engines && exit 0
+            echo "::warning::System dependency install attempt $attempt failed; retrying"
+            sudo pkill -9 -x apt-get || true
+            sudo dpkg --configure -a || true
+            sleep $((attempt * 15))
           done
           exit 1
       - uses: ./.github/actions/start-toolshop

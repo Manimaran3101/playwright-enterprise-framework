@@ -32,7 +32,13 @@ runs:
       run: |
         services="laravel-api web mariadb"
         if [ "${{ inputs.with-ui }}" = "true" ]; then services="$services angular-ui"; fi
-        docker compose -f docker-compose.yml up -d --build $services
+        # Docker Hub occasionally answers 5xx; retry with backoff instead of failing the job.
+        for attempt in 1 2 3 4; do
+          docker compose -f docker-compose.yml up -d --build $services && exit 0
+          echo "::warning::docker compose up attempt $attempt failed; retrying"
+          sleep $((attempt * 20))
+        done
+        exit 1
 
     - name: Install API dependencies
       shell: bash
