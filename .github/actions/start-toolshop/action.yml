@@ -44,6 +44,10 @@ runs:
         done
         docker compose exec -T -u root laravel-api \
           composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ffi
+        # composer runs as root, but PHP-FPM runs as www-data and must be able to write
+        # Laravel's cache and logs (same as the app's own compose "composer" service does).
+        docker compose exec -T -u root laravel-api sh -c \
+          "chown -R www-data:www-data storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache"
 
     - name: Create and seed the database
       shell: bash
@@ -62,7 +66,14 @@ runs:
           [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8091/products)" = "200" ] && echo "API ready" && exit 0
           echo "Waiting for API ($i/30)..."; sleep 2
         done
-        docker compose -f toolshop/docker-compose.yml logs laravel-api web
+        echo "::group::API diagnostics"
+        echo "--- Exception reported by GET /products:"
+        curl -s http://localhost:8091/products | grep -oE '<title>[^<]*</title>|"message": *"[^"]*"' | head -5
+        echo "--- Last Laravel log lines:"
+        docker compose -f toolshop/docker-compose.yml exec -T laravel-api sh -c 'tail -n 40 storage/logs/*.log 2>/dev/null || echo "(no log file)"'
+        echo "--- Storage permissions:"
+        docker compose -f toolshop/docker-compose.yml exec -T laravel-api ls -la storage storage/framework
+        echo "::endgroup::"
         exit 1
 
     - name: Wait for the UI
