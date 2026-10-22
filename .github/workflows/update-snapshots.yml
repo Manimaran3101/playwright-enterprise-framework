@@ -1,0 +1,37 @@
+name: Update visual baselines
+
+# Screenshots differ between operating systems, so the Linux baselines CI compares
+# against must be generated on the same Linux runner. Run this manually after an
+# intended UI change; it commits the new baselines back to the branch.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Regenerate visual baselines
+        run: npx playwright test --project=chromium --grep @visual --update-snapshots
+      - name: Commit changed baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/visual
+          if git diff --cached --quiet; then
+            echo "Baselines unchanged."
+          else
+            git commit -m "test: update Linux visual baselines"
+            git push
+          fi

@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Nightly full cross-browser regression (02:00 UTC)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      all_browsers:
+        description: 'Run Firefox, WebKit and mobile too (not just Chromium)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+  CI: true
+
+jobs:
+  quality:
+    name: Lint, types & format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+
+  api:
+    name: API tests
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Run API tests (no browser needed)
+        run: npx playwright test --project=api
+        env:
+          BLOB_REPORT_NAME: api
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-report-api
+          path: blob-report
+          retention-days: 3
+
+  ui:
+    name: UI ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # PRs and pushes: Chromium only. Nightly or manual "all browsers": the full matrix.
+        project: ${{ fromJSON((github.event_name == 'schedule' || inputs.all_browsers) && '["chromium","firefox","webkit","mobile-chrome"]' || '["chromium"]') }}
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.project }}
+      - name: Install browsers
+        # The auth setup project always needs Chromium; add the project's own engine.
+        run: |
+          case "${{ matrix.project }}" in
+            firefox) engines="chromium firefox" ;;
+            webkit)  engines="chromium webkit" ;;
+            *)       engines="chromium" ;;
+          esac
+          npx playwright install --with-deps $engines
+
+      - name: Run tests
+        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
+        env:
+          BLOB_REPORT_NAME: ${{ matrix.project }}-${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-report-${{ matrix.project }}-${{ matrix.shard }}
+          path: blob-report
+          retention-days: 3
+
+  report:
+    name: Merge reports
+    needs: [api, ui]
+    # Merge even when tests fail — a report of failures is the one you need most.
+    if: ${{ !cancelled() && (needs.api.result != 'skipped' || needs.ui.result != 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Merge shard reports into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: html-report
+          path: playwright-report
+          retention-days: 14
+      - name: Prepare report for GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report
+
+  deploy-report:
+    name: Publish report to GitHub Pages
+    needs: report
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

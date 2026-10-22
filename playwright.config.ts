@@ -25,7 +25,12 @@ export default defineConfig({
   },
 
   reporter: env.isCI
-    ? [['github'], ['html', { open: 'never' }], ['blob']]
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+        // Unique name per CI job so shard reports can be merged without collisions.
+        ['blob', { fileName: `report-${process.env.BLOB_REPORT_NAME ?? 'local'}.zip` }],
+      ]
     : [['list'], ['html', { open: 'never' }]],
 
   use: {
