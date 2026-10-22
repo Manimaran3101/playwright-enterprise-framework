@@ -1,8 +1,14 @@
 # Playwright Enterprise Framework
 
+[![CI](https://github.com/Manimaran3101/playwright-enterprise-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Manimaran3101/playwright-enterprise-framework/actions/workflows/ci.yml)
+[![Test report](https://img.shields.io/badge/test%20report-live-2ea44f?logo=playwright)](https://manimaran3101.github.io/playwright-enterprise-framework/)
+![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Hybrid **UI + API** test automation framework built with [Playwright](https://playwright.dev) and TypeScript, targeting the [Practice Software Testing (Toolshop)](https://practicesoftwaretesting.com) demo application.
 
-> 🚧 Work in progress — built in phases. See the roadmap below.
+**📊 [View the latest test report](https://manimaran3101.github.io/playwright-enterprise-framework/)**, published by CI on every push to `main` and nightly.
 
 ## Tech stack
 
@@ -40,6 +46,26 @@ npm run report          # open the last HTML report
 ```
 
 Run any tag with `npx playwright test --grep @a11y`. Update visual baselines with `npm run test:visual:update`.
+
+## CI/CD pipeline
+
+```
+quality gate (typecheck · lint · format)
+   ├── API tests ──────────────────────┐
+   └── UI tests, sharded ──────────────┤   each job starts its own Toolshop
+       PR / push: chromium × 2 shards  │   instance with Docker Compose
+       nightly:   4 browsers × 2 shards│
+                                       ▼
+                    merge blob reports → one HTML report
+                                       ▼
+                    publish to GitHub Pages (main + nightly)
+```
+
+- **Hermetic test environment** — [`.github/actions/start-toolshop`](.github/actions/start-toolshop/action.yml) runs the app (Laravel API, Angular UI, MariaDB) inside every CI job, pinned to a commit and freshly seeded. The public demo is behind a Cloudflare bot check that challenges CI runners; testing a private instance avoids that _without_ trying to bypass it, and also removes cold starts and shared data.
+- **Sharding + blob reports** — shards run in parallel and their reports are merged into a single HTML report with traces.
+- **Linux visual baselines** — [`update-snapshots.yml`](.github/workflows/update-snapshots.yml) regenerates them on the same runner and app version CI uses.
+- **Dependabot** keeps npm packages and GitHub Actions current.
+- Locally, tests run against the public demo by default (`TEST_ENV=prod`).
 
 ## Project structure
 
@@ -83,6 +109,7 @@ tests/
 | **Accessibility baseline (ratchet)**                      | Existing violations are listed in `known-issues.ts`; any _new_ critical/serious violation fails the build.                                                |
 | **Separate API timeout**                                  | The demo API has occasional 20s+ cold starts; API calls get 30s, UI actions keep 10s.                                                                     |
 | **Cash on delivery in checkout**                          | The E2E flow never types card or bank details, even fake ones.                                                                                            |
+| **Private app instance in CI**                            | The public demo challenges datacenter IPs (Cloudflare). CI runs its own seeded copy instead of bypassing the check — faster, deterministic, and isolated. |
 
 ## Findings in the application under test
 
@@ -98,5 +125,5 @@ Real issues this suite uncovered, each documented by a test:
 - [x] Phase 1 — Foundation: tooling, config, environment switching, smoke tests
 - [x] Phase 2 — Architecture: Page Objects, custom fixtures, auth reuse, data factories
 - [x] Phase 3 — Test suites: E2E, API + schema validation, hybrid, mocking, visual, a11y
-- [ ] Phase 4 — CI/CD: GitHub Actions, sharding, Allure report on GitHub Pages
+- [x] Phase 4 — CI/CD: GitHub Actions, hermetic app in Docker, sharding, merged report on GitHub Pages
 - [ ] Phase 5 — Polish: badges, architecture diagram, demo GIF
