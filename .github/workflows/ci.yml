@@ -99,13 +99,20 @@ jobs:
           key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.project }}
       - name: Install browsers
         # The auth setup project always needs Chromium; add the project's own engine.
+        # apt mirrors occasionally stall on hosted runners, so each attempt is capped
+        # and retried instead of letting one hang consume the whole job timeout.
+        timeout-minutes: 16
         run: |
           case "${{ matrix.project }}" in
             firefox) engines="chromium firefox" ;;
             webkit)  engines="chromium webkit" ;;
             *)       engines="chromium" ;;
           esac
-          npx playwright install --with-deps $engines
+          for attempt in 1 2 3; do
+            timeout 5m npx playwright install --with-deps $engines && exit 0
+            echo "::warning::Browser install attempt $attempt failed or timed out; retrying"
+          done
+          exit 1
       - uses: ./.github/actions/start-toolshop
 
       - name: Run tests
