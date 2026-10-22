@@ -89,45 +89,31 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Resolve Playwright version
+      # Tests run inside Microsoft's official Playwright image: every browser and system
+      # library is preinstalled and pinned to our Playwright version. Installing them on
+      # the runner via apt proved unreliable (some runners get a crawling package mirror).
+      - name: Pull the Playwright image
         id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - name: Cache browsers
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.project }}
-      - name: Install browsers
-        # The auth setup project always needs Chromium; add the project's own engine.
-        timeout-minutes: 20
         run: |
-          case "${{ matrix.project }}" in
-            firefox) engines="chromium firefox" ;;
-            webkit)  engines="chromium webkit" ;;
-            *)       engines="chromium" ;;
-          esac
-
-          # Browser binaries come from Playwright's CDN (and the cache) — no apt involved.
-          npx playwright install $engines
-
-          # System libraries come from apt, whose mirrors occasionally stall on hosted
-          # runners. Let apt time out and retry by itself, wait for (not fail on) the
-          # dpkg lock, and clean up any half-finished attempt before retrying.
-          printf '%s\n' 'Acquire::Retries "5";' 'Acquire::http::Timeout "30";' \
-            'Acquire::https::Timeout "30";' 'DPkg::Lock::Timeout "300";' \
-            | sudo tee /etc/apt/apt.conf.d/99-ci-resilience > /dev/null
+          image="mcr.microsoft.com/playwright:v$(node -p "require('@playwright/test/package.json').version")-noble"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
           for attempt in 1 2 3; do
-            timeout --kill-after=30s 6m npx playwright install-deps $engines && exit 0
-            echo "::warning::System dependency install attempt $attempt failed; retrying"
-            sudo pkill -9 -x apt-get || true
-            sudo dpkg --configure -a || true
+            docker pull -q "$image" && exit 0
+            echo "::warning::docker pull attempt $attempt failed; retrying"
             sleep $((attempt * 15))
           done
           exit 1
       - uses: ./.github/actions/start-toolshop
 
       - name: Run tests
-        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
+        # --network host: reach the Toolshop containers on localhost:4200 / :8091.
+        # --ipc host: recommended for Chromium in Docker. --init: reaps browser processes.
+        run: |
+          docker run --rm --init --network host --ipc host \
+            -v "$PWD":/work -w /work \
+            -e CI -e TEST_ENV -e BLOB_REPORT_NAME \
+            "${{ steps.pw.outputs.image }}" \
+            npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
         env:
           BLOB_REPORT_NAME: ${{ matrix.project }}-${{ matrix.shard }}
       - uses: actions/upload-artifact@v7

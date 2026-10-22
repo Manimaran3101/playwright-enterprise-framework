@@ -1,8 +1,8 @@
 name: Update visual baselines
 
-# Screenshots differ between operating systems, so the Linux baselines CI compares
-# against must be generated on the same Linux runner. Run this manually after an
-# intended UI change; it commits the new baselines back to the branch.
+# Screenshots differ between environments, so the Linux baselines CI compares
+# against are generated in the same Playwright Docker image and app version CI uses.
+# Run this manually after an intended UI change; it commits the new baselines back.
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -21,13 +21,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Pull the Playwright image
+        id: pw
+        run: |
+          image="mcr.microsoft.com/playwright:v$(node -p "require('@playwright/test/package.json').version")-noble"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          docker pull -q "$image"
       # Same private app instance CI tests against, so baselines match what CI sees.
       - uses: ./.github/actions/start-toolshop
       - name: Regenerate visual baselines
-        run: npx playwright test --project=chromium --grep @visual --update-snapshots
-        env:
-          TEST_ENV: local
+        run: |
+          docker run --rm --init --network host --ipc host \
+            -v "$PWD":/work -w /work -e CI=true -e TEST_ENV=local \
+            "${{ steps.pw.outputs.image }}" \
+            npx playwright test --project=chromium --grep @visual --update-snapshots
       - name: Commit changed baselines
         run: |
           git config user.name "github-actions[bot]"
