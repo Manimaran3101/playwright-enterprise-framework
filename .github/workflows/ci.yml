@@ -140,7 +140,7 @@ jobs:
           retention-days: 14
       - name: Prepare report for GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: playwright-report
 
