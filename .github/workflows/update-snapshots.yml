@@ -37,8 +37,9 @@ jobs:
             npx playwright test --project=chromium --grep @visual --update-snapshots
       - name: Commit changed baselines
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Commit as the repo owner (GitHub no-reply address) so history has one author.
+          git config user.name "Manimaran Murugan"
+          git config user.email "58616272+Manimaran3101@users.noreply.github.com"
           git add tests/visual
           if git diff --cached --quiet; then
             echo "Baselines unchanged."
