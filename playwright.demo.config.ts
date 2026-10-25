@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import baseConfig from './playwright.config';
 
-/** Records the README demo GIF. Not part of the test suite: `npm run demo:record`. */
+// Only for recording the README GIF (npm run demo:record), not a test.
 export default defineConfig({
   ...baseConfig,
   testDir: './scripts/demo',

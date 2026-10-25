@@ -12,8 +12,8 @@ test.describe('Home page', { tag: '@smoke' }, () => {
     await expect(homePage.products.names.first()).toBeVisible();
   });
 
-  // Search also matches descriptions (e.g. "pliers" finds Bolt Cutters), so the
-  // API search endpoint is the oracle rather than a naive "name contains term" check.
+  // Search also finds words in the description ("pliers" finds Bolt Cutters),
+  // so I compare with the search API instead of checking the names.
   test('search shows the same products the search API returns', async ({
     homePage,
     productsApi,

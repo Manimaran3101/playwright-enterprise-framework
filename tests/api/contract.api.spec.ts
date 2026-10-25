@@ -9,13 +9,9 @@ import {
 } from '@data/schemas';
 import type { APIResponse } from '@playwright/test';
 
-/** Typed as unknown, not any: the schema is what decides what the body is. */
 const bodyOf = (response: APIResponse): Promise<unknown> => response.json();
 
-/**
- * Contract tests: do live responses still have the shape our code relies on?
- * They use raw responses (not the typed clients) so the schema is what judges the body.
- */
+// Contract tests: check the real API responses with the Zod schemas (raw responses, no typed clients).
 test.describe('API contracts', { tag: ['@contract', '@regression'] }, () => {
   test('GET /products matches the paginated product contract', async ({ productsApi }) => {
     const response = await productsApi.raw('get', '/products');
@@ -34,9 +30,8 @@ test.describe('API contracts', { tag: ['@contract', '@regression'] }, () => {
       type: 'known issue',
       description:
         'Search returns products without `category.slug`, unlike GET /products. ' +
-        'Same resource, two shapes — consumers relying on slug break on search results.',
+        'Code that needs slug breaks on search results.',
     });
-    // Documents a real API inconsistency; flips to "unexpectedly passed" once fixed.
     test.fail();
 
     const response = await productsApi.raw('get', '/products/search', { params: { q: 'hammer' } });

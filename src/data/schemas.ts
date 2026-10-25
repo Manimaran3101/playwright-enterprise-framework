@@ -1,11 +1,8 @@
 import { z } from 'zod';
 
-/**
- * API contracts. These schemas are the single source of truth for response shapes:
- * TypeScript types are inferred from them (see types.ts), and contract tests
- * validate live responses against them. Objects are non-strict on purpose —
- * new fields are not a breaking change, but missing or retyped fields are.
- */
+// API response schemas. The types in types.ts are made from these, and the contract
+// tests check the real responses with them. Not strict: a new field is OK, a missing
+// field or a wrong type fails.
 
 const id = z.string().min(1);
 

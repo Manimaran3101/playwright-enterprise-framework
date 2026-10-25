@@ -35,8 +35,8 @@ test.describe('Checkout', { tag: ['@e2e', '@regression'] }, () => {
 
     await test.step('Billing address is prefilled from the profile', async () => {
       const { address } = savedUser;
-      // Only the user's own inputs are checked: for NL addresses the app's postcode
-      // lookup replaces street and city with the official ones for that postcode.
+      // For NL addresses the app looks up the postcode and changes street and city,
+      // so I only check country and postcode.
       await expect(checkoutPage.billing.country).toHaveValue(address.country);
       await expect(checkoutPage.billing.postalCode).toHaveValue(address.postal_code);
       await expect(checkoutPage.billing.city).not.toBeEmpty();

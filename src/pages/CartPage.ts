@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
-/** Step 1 of the checkout wizard: the cart overview. */
+// Cart page (step 1 of checkout).
 export class CartPage extends BasePage {
   protected readonly path = '/checkout';
   readonly productTitles: Locator;

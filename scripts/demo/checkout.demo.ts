@@ -3,10 +3,7 @@ import { test, expect } from '@fixtures/index';
 import { buildUser } from '@data/factories/user.factory';
 import { caption, GifRecorder } from './gif-recorder';
 
-/**
- * Records docs/demo/checkout-demo.gif — the README demo.
- * Run with: npm run demo:record
- */
+// Records docs/demo/checkout-demo.gif for the README. Run: npm run demo:record
 test('record checkout demo', async ({
   page,
   authApi,
@@ -19,7 +16,7 @@ test('record checkout demo', async ({
 }) => {
   test.setTimeout(180_000);
 
-  // Arrange off-camera: fresh user via API, logged in by token injection.
+  // Before recording: new user via API, logged in with the token.
   const user = buildUser();
   await authApi.register(user);
   const token = await loginViaApi(user);

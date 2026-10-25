@@ -1,4 +1,4 @@
-// Minimal typings for the parts of gifenc (https://github.com/mattdesl/gifenc) we use.
+// Types for the parts of gifenc (https://github.com/mattdesl/gifenc) I use.
 declare module 'gifenc' {
   export type Palette = number[][];
 

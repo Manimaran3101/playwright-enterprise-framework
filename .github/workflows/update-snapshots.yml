@@ -1,8 +1,7 @@
 name: Update visual baselines
 
-# Screenshots differ between environments, so the Linux baselines CI compares
-# against are generated in the same Playwright Docker image and app version CI uses.
-# Run this manually after an intended UI change; it commits the new baselines back.
+# Makes the Linux visual baselines in the same Docker image and app version as CI.
+# Run it by hand after a UI change. It commits the new baselines.
 
 on:
   workflow_dispatch:
@@ -27,7 +26,6 @@ jobs:
           image="mcr.microsoft.com/playwright:v$(node -p "require('@playwright/test/package.json').version")-noble"
           echo "image=$image" >> "$GITHUB_OUTPUT"
           docker pull -q "$image"
-      # Same private app instance CI tests against, so baselines match what CI sees.
       - uses: ./.github/actions/start-toolshop
       - name: Regenerate visual baselines
         run: |
@@ -37,7 +35,7 @@ jobs:
             npx playwright test --project=chromium --grep @visual --update-snapshots
       - name: Commit changed baselines
         run: |
-          # Commit as the repo owner (GitHub no-reply address) so history has one author.
+          # Commit as the repo owner
           git config user.name "Manimaran Murugan"
           git config user.email "58616272+Manimaran3101@users.noreply.github.com"
           git add tests/visual

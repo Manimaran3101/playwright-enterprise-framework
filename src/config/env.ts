@@ -1,15 +1,12 @@
 import 'dotenv/config';
 
-/**
- * Single source of truth for environment-specific settings.
- * Pick a preset with TEST_ENV; BASE_URL / API_URL override the preset.
- */
+// Test environment settings. TEST_ENV picks a preset, BASE_URL / API_URL override it.
 const presets = {
   prod: {
     baseUrl: 'https://practicesoftwaretesting.com',
     apiUrl: 'https://api.practicesoftwaretesting.com',
   },
-  // The project publishes a "with bugs" build, handy for demoing failing checks.
+  // Version of the app with bugs in it, good to see failing tests.
   'with-bugs': {
     baseUrl: 'https://with-bugs.practicesoftwaretesting.com',
     apiUrl: 'https://api-with-bugs.practicesoftwaretesting.com',

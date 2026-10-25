@@ -1,14 +1,8 @@
 import { test } from '@playwright/test';
 
-/**
- * Method decorator that wraps a page-object or API-client method in `test.step`,
- * so the HTML report and trace show readable business steps instead of raw clicks.
- *
- *   @step('Add product to cart')
- *   async addToCart() { ... }
- *
- * Without a title, the step is named `ClassName.methodName`.
- */
+// Decorator that runs the method inside test.step, so it shows as a step in the
+// report and trace. Example: @step('Add product to cart').
+// Without a title the step is called ClassName.methodName.
 export function step(title?: string) {
   return function <This, Args extends unknown[], Return>(
     target: (this: This, ...args: Args) => Promise<Return>,

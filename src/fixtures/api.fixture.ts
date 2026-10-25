@@ -10,24 +10,23 @@ import { buildUser } from '@data/factories/user.factory';
 import type { UserData } from '@data/types';
 
 export interface ApiFixtures {
-  /** Request context pointed at the API host, independent of the project's baseURL. */
+  /** Request context for the API URL (not the UI baseURL). */
   apiRequest: APIRequestContext;
   authApi: AuthClient;
   productsApi: ProductsClient;
   cartApi: CartClient;
   invoicesApi: InvoicesClient;
-  /** A brand-new user registered through the API, isolated to this test. */
+  /** New user registered with the API, only for this test. */
   newUser: UserData;
-  /** The user whose session was saved by auth.setup.ts (use with STORAGE_STATE). */
+  /** The user saved by auth.setup.ts (use with STORAGE_STATE). */
   savedUser: UserData;
-  /** Logs `user` in via the API, puts the JWT in the browser, and returns the token. */
+  /** Logs in with the API, puts the JWT in localStorage, returns the token. */
   loginViaApi: (user: UserData) => Promise<string>;
 }
 
 export const test = base.extend<ApiFixtures>({
   apiRequest: async ({ playwright }, use) => {
-    // The public demo API has occasional cold starts of 20s+, so API calls get
-    // their own budget instead of the 10s UI action timeout.
+    // The demo API is sometimes slow (20s+), so API calls have their own timeout.
     const context = await playwright.request.newContext({
       baseURL: env.apiUrl,
       timeout: env.apiTimeout,

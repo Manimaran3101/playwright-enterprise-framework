@@ -7,7 +7,7 @@ import type {
   UserSchema,
 } from './schemas';
 
-/** Response types are inferred from the Zod contracts, so they can never drift apart. */
+// Response types come from the Zod schemas.
 export type Product = z.infer<typeof ProductSchema>;
 export type TokenResponse = z.infer<typeof TokenSchema>;
 export type UserResponse = z.infer<typeof UserSchema>;
@@ -22,7 +22,7 @@ export interface Paginated<T> {
   data: T[];
 }
 
-/** Request payloads (what we send), written by hand. Field names mirror the API. */
+// Request bodies, written by hand with the API field names.
 
 export interface Address {
   street: string;

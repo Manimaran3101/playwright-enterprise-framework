@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # Nightly full cross-browser regression (02:00 UTC)
+    # Every night at 02:00 UTC, all browsers
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
@@ -24,8 +24,7 @@ concurrency:
 env:
   NODE_VERSION: 22
   CI: true
-  # Tests run against a private Toolshop instance started inside each job
-  # (see .github/actions/start-toolshop), not the Cloudflare-protected public demo.
+  # Tests use the Toolshop app started in each job (.github/actions/start-toolshop), not the public site.
   TEST_ENV: local
 
 jobs:
@@ -78,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # PRs and pushes: Chromium only. Nightly or manual "all browsers": the full matrix.
+        # PRs and pushes: Chromium only. Nightly or "all browsers": all 4.
         project: ${{ fromJSON((github.event_name == 'schedule' || inputs.all_browsers) && '["chromium","firefox","webkit","mobile-chrome"]' || '["chromium"]') }}
         shard: [1, 2]
     steps:
@@ -89,9 +88,8 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # Tests run inside Microsoft's official Playwright image: every browser and system
-      # library is preinstalled and pinned to our Playwright version. Installing them on
-      # the runner via apt proved unreliable (some runners get a crawling package mirror).
+      # Run the tests in Microsoft's Playwright image (browsers already installed).
+      # Installing with apt on the runner was too slow on some runners.
       - name: Pull the Playwright image
         id: pw
         run: |
@@ -106,10 +104,8 @@ jobs:
       - uses: ./.github/actions/start-toolshop
 
       - name: Run tests
-        # --network host: reach the Toolshop containers on localhost:4200 / :8091.
-        # --ipc host: recommended for Chromium in Docker. --init: reaps browser processes.
-        # Same path inside and outside the container, so all shard reports share one
-        # testDir and can be merged with the API job's report.
+        # --network host: the app runs on localhost:4200 / :8091. --ipc host is recommended
+        # for Chromium in Docker. Same path inside the container, otherwise merge-reports fails.
         run: |
           docker run --rm --init --network host --ipc host \
             -v "$PWD":"$PWD" -w "$PWD" \
@@ -128,7 +124,7 @@ jobs:
   report:
     name: Merge reports
     needs: [api, ui]
-    # Merge even when tests fail — a report of failures is the one you need most.
+    # Merge reports also when tests failed.
     if: ${{ !cancelled() && (needs.api.result != 'skipped' || needs.ui.result != 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -11,7 +11,7 @@ export class HomePage extends BasePage {
   readonly searchSubmit: Locator;
   readonly searchCaption: Locator;
   readonly sortSelect: Locator;
-  /** Mobile-only button that reveals the search and filter panel. */
+  /** Mobile only: button that opens search and filters. */
   readonly filtersToggle: Locator;
 
   constructor(page: Page) {
@@ -21,7 +21,7 @@ export class HomePage extends BasePage {
     this.searchSubmit = page.getByTestId('search-submit');
     this.searchCaption = page.getByTestId('search-caption');
     this.sortSelect = page.getByTestId('sort');
-    // data-test="filters" is on both the toggle and the panel; we want the button.
+    // data-test="filters" is on the button and the panel, I need the button.
     this.filtersToggle = page.locator('button[data-test="filters"]');
   }
 

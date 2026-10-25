@@ -5,15 +5,12 @@ type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 interface SendOptions {
   data?: unknown;
   params?: Record<string, string | number | boolean>;
-  /** Status the caller expects; anything else throws with the response body attached. */
+  /** Expected status (default 200). Any other status throws with the response body. */
   expectedStatus?: number;
 }
 
-/**
- * Thin, typed wrapper over Playwright's APIRequestContext.
- * Happy-path helpers fail fast with a readable error, so a broken setup call
- * never surfaces later as a confusing UI failure.
- */
+// Small wrapper around APIRequestContext. If a setup call fails, it throws right away
+// with the status and body, so I don't get a strange UI failure later.
 export abstract class BaseApiClient {
   protected token?: string;
 
@@ -36,7 +33,7 @@ export abstract class BaseApiClient {
     return response.status() === 204 ? (undefined as T) : ((await response.json()) as T);
   }
 
-  /** Unchecked call for negative tests that assert on the response themselves. */
+  /** No status check. For negative tests that check the response themselves. */
   async raw(method: Method, url: string, options: SendOptions = {}): Promise<APIResponse> {
     return this.request[method](url, {
       data: options.data,

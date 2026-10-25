@@ -2,10 +2,7 @@ import { test, expect } from '@fixtures/index';
 import { MOCK_CATALOGUE, mockProductPage } from '@data/mocks/products';
 import { apiRoute } from '@utils/routes';
 
-/**
- * Network mocking: force states that are hard or impossible to reach
- * against a shared live backend — empty data, server errors, edge-case values.
- */
+// Mocked API responses for cases I can't get from the real backend: no data, errors, long values.
 test.describe('Product listing with mocked API', { tag: ['@mocked', '@regression'] }, () => {
   test('shows a friendly message when there are no products', async ({ page, homePage }) => {
     await page.route(apiRoute('/products'), (route) =>
@@ -37,7 +34,7 @@ test.describe('Product listing with mocked API', { tag: ['@mocked', '@regression
       .repeat(2)
       .trim();
 
-    // Patch the real response instead of replacing it: everything else stays realistic.
+    // Change only the first product in the real response.
     await page.route(apiRoute('/products'), async (route) => {
       const response = await route.fetch();
       const body = await response.json();
@@ -57,8 +54,7 @@ test.describe('Product listing with mocked API', { tag: ['@mocked', '@regression
       description:
         'On HTTP 500 the grid silently renders empty: no error and no "no results" message.',
     });
-    // Marked as expected-to-fail: this documents a real UX defect. When the app
-    // is fixed, Playwright reports this test as "unexpectedly passed".
+    // Known bug, expected to fail until it is fixed.
     test.fail();
 
     await page.route(apiRoute('/products'), (route) =>

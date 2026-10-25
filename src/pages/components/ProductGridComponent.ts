@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { step } from '@utils/step';
 
-/** The product card grid used on the home page and category pages. */
+// Product cards on the home and category pages.
 export class ProductGridComponent {
   readonly cards: Locator;
   readonly names: Locator;

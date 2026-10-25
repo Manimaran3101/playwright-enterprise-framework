@@ -8,10 +8,7 @@ const browserProjects = [
   ['mobile-chrome', 'Pixel 7'],
 ] as const;
 
-/**
- * Locally: 2 workers to stay within a low-RAM laptop's limits.
- * CI: retries on, forbid .only, and machine-readable reporters.
- */
+// Local: 2 workers (my laptop has little RAM). CI: retries, no .only, extra reporters.
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -28,7 +25,7 @@ export default defineConfig({
     ? [
         ['github'],
         ['html', { open: 'never' }],
-        // Unique name per CI job so shard reports can be merged without collisions.
+        // Different name per CI job so the reports can be merged.
         ['blob', { fileName: `report-${process.env.BLOB_REPORT_NAME ?? 'local'}.zip` }],
       ]
     : [['list'], ['html', { open: 'never' }]],
@@ -50,19 +47,17 @@ export default defineConfig({
       timeout: 60_000,
       use: { baseURL: env.apiUrl },
     },
-    // Registers a user and saves its session once; browser projects depend on it.
     {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
-      // Everything depends on this step, so absorb a slow demo-API response.
+      // Registers a user and saves the session. All browser tests need it, so retry if the API is slow.
       retries: 2,
       timeout: 90_000,
       use: { ...devices['Desktop Chrome'] },
     },
     ...browserProjects.map(([name, device]) => ({
       name,
-      // Visual baselines are kept for Chromium only: one reference per screen is
-      // enough to catch layout regressions without tripling snapshot maintenance.
+      // Visual tests only on Chromium.
       testIgnore: name === 'chromium' ? /api\// : [/api\//, /visual\//],
       dependencies: ['setup'],
       use: { ...devices[device] },

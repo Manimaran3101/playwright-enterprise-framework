@@ -1,11 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { test, expect } from '@fixtures/index';
 
-/**
- * Hybrid tests: arrange or verify through the API, act or observe through the UI.
- * Faster and more stable than doing everything in the browser, and they prove
- * the UI and backend agree with each other.
- */
+// Hybrid tests: set up or check with the API, do the action in the UI.
 test.describe('Profile (API ⇄ UI)', { tag: ['@hybrid', '@regression'] }, () => {
   test('data registered via API is shown in the UI profile', async ({
     newUser,

@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expandIfCollapsed } from '@utils/collapsible';
 import { step } from '@utils/step';
 
-/** Top navigation bar, shared by every page. */
+// Top menu, used on every page.
 export class HeaderComponent {
   readonly menuToggle: Locator;
   readonly signInLink: Locator;
@@ -20,9 +20,9 @@ export class HeaderComponent {
     this.cartQuantity = page.getByTestId('cart-quantity');
   }
 
-  /** On mobile widths the nav links live behind a hamburger menu; open it if needed. */
+  /** On mobile the links are in the hamburger menu, so open it first. */
   async expand(): Promise<void> {
-    // Wait until Angular has rendered the nav (logged in or out) before checking the toggle.
+    // Wait until the menu is rendered (logged in or out) before checking the toggle.
     await this.signInLink.or(this.userMenu).waitFor({ state: 'attached' });
     await expandIfCollapsed(this.menuToggle);
   }

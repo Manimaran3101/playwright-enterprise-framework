@@ -2,7 +2,7 @@
   "name": "playwright-enterprise-framework",
   "version": "0.1.0",
   "private": true,
-  "description": "Hybrid UI + API test automation framework built with Playwright and TypeScript, targeting the Practice Software Testing (Toolshop) demo app.",
+  "description": "UI and API tests with Playwright and TypeScript for the Practice Software Testing (Toolshop) demo app.",
   "author": "Manimaran Murugan",
   "license": "MIT",
   "engines": {

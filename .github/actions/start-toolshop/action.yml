@@ -1,16 +1,14 @@
 name: Start Toolshop
 description: >
-  Runs the Practice Software Testing (Toolshop) app inside the CI runner with Docker Compose,
-  so tests hit a private, freshly seeded instance instead of the shared public demo
-  (which sits behind a Cloudflare bot check and has slow cold starts).
-  Steps mirror the app's own CI: https://github.com/testsmith-io/practice-software-testing
+  Starts the Toolshop app in the CI runner with Docker Compose, with fresh seed data.
+  Same steps as the app's own CI: https://github.com/testsmith-io/practice-software-testing
 
 inputs:
   with-ui:
     description: Also start and wait for the Angular UI (not needed for API-only jobs)
     default: 'true'
   ref:
-    description: App commit to test against — pinned so CI results are reproducible
+    description: App commit to test against (fixed, so results are the same)
     default: ae7caecb811dd8952c09d997e69be7cb946ecd44
 
 runs:
@@ -32,7 +30,7 @@ runs:
       run: |
         services="laravel-api web mariadb"
         if [ "${{ inputs.with-ui }}" = "true" ]; then services="$services angular-ui"; fi
-        # Docker Hub occasionally answers 5xx; retry with backoff instead of failing the job.
+        # Docker Hub sometimes returns 5xx, so retry a few times.
         for attempt in 1 2 3 4; do
           docker compose -f docker-compose.yml up -d --build $services && exit 0
           echo "::warning::docker compose up attempt $attempt failed; retrying"
@@ -50,8 +48,7 @@ runs:
         done
         docker compose exec -T -u root laravel-api \
           composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ffi
-        # composer runs as root, but PHP-FPM runs as www-data and must be able to write
-        # Laravel's cache and logs (same as the app's own compose "composer" service does).
+        # composer runs as root, but PHP-FPM (www-data) must be able to write cache and logs.
         docker compose exec -T -u root laravel-api sh -c \
           "chown -R www-data:www-data storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache"
 

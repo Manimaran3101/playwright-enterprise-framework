@@ -18,7 +18,7 @@ test.describe('Accessibility (WCAG 2.1 AA)', { tag: ['@a11y', '@regression'] }, 
 
       const results = await makeAxeBuilder().analyze();
 
-      // Full report attached to the HTML report for triage, whatever the outcome.
+      // Attach the full axe result to the report.
       await testInfo.attach(`axe-${name}.json`, {
         body: JSON.stringify(results.violations, null, 2),
         contentType: 'application/json',
@@ -38,13 +38,13 @@ test.describe('Accessibility (WCAG 2.1 AA)', { tag: ['@a11y', '@regression'] }, 
       for (const id of Object.keys(known).filter((id) => !blocking.some((v) => v.id === id))) {
         testInfo.annotations.push({
           type: 'a11y issue resolved',
-          description: `${id} no longer occurs — remove it from known-issues.ts`,
+          description: `${id} no longer happens, remove it from known-issues.ts`,
         });
       }
 
       const newViolations = blocking
         .filter((v) => !(v.id in known))
-        .map((v) => `${v.impact}: ${v.id} — ${v.help} (${v.nodes.length} element(s))`);
+        .map((v) => `${v.impact}: ${v.id}: ${v.help} (${v.nodes.length} element(s))`);
 
       expect(newViolations, 'new critical/serious accessibility violations').toEqual([]);
     });

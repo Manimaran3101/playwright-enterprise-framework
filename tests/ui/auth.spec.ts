@@ -32,8 +32,7 @@ test.describe('Authentication', { tag: '@regression' }, () => {
     await expect(page).toHaveURL(/\/auth\/login/);
   });
 
-  // Uses its own user: signing out may revoke the token, which must never
-  // happen to the shared saved session other tests are using in parallel.
+  // Own user here: sign-out can revoke the token, and other tests use the saved session.
   test('a logged-in user can sign out', async ({ newUser, loginPage, accountPage }) => {
     await loginPage.goto();
     await loginPage.login(newUser.email, newUser.password);
@@ -41,7 +40,7 @@ test.describe('Authentication', { tag: '@regression' }, () => {
 
     await accountPage.header.signOut();
 
-    // Sign-out reloads the page; wait for the logged-out header before opening it.
+    // Sign-out reloads the page, so wait for the header first.
     await expect(accountPage.header.signInLink).toBeAttached();
     await accountPage.header.expand();
     await expect(accountPage.header.signInLink).toBeVisible();
@@ -54,7 +53,7 @@ test.describe('Authentication', { tag: '@regression' }, () => {
       await accountPage.goto();
 
       await expect(accountPage.title).toHaveText('My account');
-      // Open the nav first so "Sign in is hidden" means logged in, not "menu collapsed".
+      // Open the menu first, otherwise "Sign in" is hidden on mobile anyway.
       await accountPage.header.expand();
       await expect(accountPage.header.userMenu).toBeVisible();
       await expect(accountPage.header.userMenu).toContainText(savedUser.first_name);

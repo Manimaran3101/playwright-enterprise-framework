@@ -5,10 +5,7 @@ import { CartPage } from './CartPage';
 export type PaymentMethod =
   'bank-transfer' | 'cash-on-delivery' | 'credit-card' | 'buy-now-pay-later' | 'gift-card';
 
-/**
- * The 4-step checkout wizard (cart → sign in → billing address → payment).
- * Extends CartPage because step 1 *is* the cart.
- */
+// Checkout with 4 steps: cart, sign in, billing address, payment. Step 1 is the cart page.
 export class CheckoutPage extends CartPage {
   readonly proceedAsSignedInButton: Locator;
   readonly billing: Record<
@@ -38,12 +35,12 @@ export class CheckoutPage extends CartPage {
     this.proceedFromAddressButton = page.getByTestId('proceed-3');
     this.paymentMethodSelect = page.getByTestId('payment-method');
     this.finishButton = page.getByTestId('finish');
-    // One element changes role: "Check payment" → (payment accepted) → "Confirm".
-    // Targeting each state by text makes clicks wait for the right state.
+    // Same button: first "Check payment", then "Confirm". Filtering by text makes the
+    // click wait for the right text (it was flaky on mobile without this).
     this.checkPaymentButton = this.finishButton.filter({ hasText: 'Check payment' });
     this.confirmButton = this.finishButton.filter({ hasText: 'Confirm' });
     this.paymentSuccessMessage = page.getByTestId('payment-success-message');
-    // The confirmation has no data-test hook; the id is the most stable option.
+    // No data-test attribute here, so I use the id.
     this.orderConfirmation = page.locator('#order-confirmation');
     this.invoiceNumber = this.orderConfirmation.locator('span');
   }
@@ -63,7 +60,7 @@ export class CheckoutPage extends CartPage {
     await this.proceedFromAddressButton.click();
   }
 
-  /** Cash on delivery needs no payment details, so no card or bank data is ever typed. */
+  // Only cash on delivery, so I never type card or bank details.
   @step('Checkout: pay')
   async pay(
     method: Extract<PaymentMethod, 'cash-on-delivery'> = 'cash-on-delivery',

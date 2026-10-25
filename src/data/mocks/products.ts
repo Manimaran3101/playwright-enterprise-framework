@@ -1,6 +1,6 @@
 import type { Paginated, Product } from '../types';
 
-/** Deterministic catalogue for mocked and visual tests — independent of the live database. */
+// Fixed mock products for the mocked and visual tests.
 export function mockProduct(overrides: Partial<Product> = {}): Product {
   return {
     id: '01MOCKPRODUCT0000000000001',

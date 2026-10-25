@@ -1,10 +1,7 @@
 import { expect as base } from '@playwright/test';
 import { z } from 'zod';
 
-/**
- * Custom matcher: `expect(body).toMatchSchema(ProductSchema)`.
- * On failure it prints every violated field path, not just "parse failed".
- */
+// expect(body).toMatchSchema(ProductSchema). On failure it prints every wrong field.
 export const expect = base.extend({
   toMatchSchema(received: unknown, schema: z.ZodType) {
     const result = schema.safeParse(received);

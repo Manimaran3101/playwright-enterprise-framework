@@ -18,7 +18,7 @@ export class ProductsClient extends BaseApiClient {
     return this.send<Paginated<Product>>('get', '/products/search', { params: { q } });
   }
 
-  /** First in-stock, non-rental product — something a shopper can actually buy. */
+  /** First product that is in stock and not a rental, so it can be bought. */
   async firstPurchasable(): Promise<Product> {
     const { data } = await this.list({ is_rental: 'false' });
     const product = data.find((p) => p.in_stock && !p.is_rental);

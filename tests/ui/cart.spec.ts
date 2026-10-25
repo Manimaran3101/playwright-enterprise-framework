@@ -6,7 +6,6 @@ test.describe('Shopping cart', { tag: '@regression' }, () => {
     productPage,
     cartPage,
   }) => {
-    // Arrange through the API: pick a real, purchasable product instead of hard-coding one.
     const product = await productsApi.firstPurchasable();
     const quantity = 2;
 

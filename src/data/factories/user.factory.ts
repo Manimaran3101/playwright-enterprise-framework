@@ -1,12 +1,7 @@
 import { faker } from '@faker-js/faker';
 import type { UserData } from '../types';
 
-/**
- * Builds a valid, unique user for registration.
- * Every field can be overridden, so negative tests only state what differs:
- *
- *   buildUser({ password: 'short' })
- */
+// Valid, unique user for registration. Override fields for negative tests: buildUser({ password: 'short' })
 export function buildUser(overrides: Partial<UserData> = {}): UserData {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
@@ -17,7 +12,7 @@ export function buildUser(overrides: Partial<UserData> = {}): UserData {
     // API accepts ages 18–75
     dob: faker.date.birthdate({ mode: 'age', min: 20, max: 70 }).toISOString().slice(0, 10),
     phone: faker.string.numeric(10),
-    // A unique, clearly fake address on a reserved test domain
+    // .test domain, so it is never a real email
     email: `pw.${faker.string.alphanumeric(10).toLowerCase()}.${Date.now()}@example.test`,
     password: strongPassword(),
     address: {
@@ -25,7 +20,7 @@ export function buildUser(overrides: Partial<UserData> = {}): UserData {
       house_number: faker.string.numeric({ length: { min: 1, max: 3 } }),
       city: faker.location.city().slice(0, 40),
       state: faker.location.state().slice(0, 40),
-      // ISO 3166 alpha-2 code: what the register form's <select> submits
+      // Country code, same value the register form sends
       country: 'NL',
       postal_code: `${faker.string.numeric(4)}AB`,
     },
@@ -33,7 +28,7 @@ export function buildUser(overrides: Partial<UserData> = {}): UserData {
   };
 }
 
-/** Meets the API rule: upper, lower, digit and symbol, min 8 characters. */
+// API rule: upper, lower, digit, symbol, at least 8 characters.
 function strongPassword(): string {
   return `${faker.string.alpha({ length: 4, casing: 'upper' })}${faker.string.alpha({ length: 4, casing: 'lower' })}${faker.string.numeric(3)}!#`;
 }
